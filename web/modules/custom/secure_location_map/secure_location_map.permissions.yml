@@ -1,0 +1,14 @@
+administer secure location map:
+  title: 'Administer Secure Location Map'
+  description: 'Manage settings, datasets, and all Secure Location Map data.'
+  restrict access: true
+
+upload secure location map csv:
+  title: 'Upload Secure Location Map CSV files'
+  description: 'Import CSV data into an existing dataset.'
+  restrict access: true
+
+view secure location map:
+  title: 'View Secure Location Map'
+  description: 'View public maps and the public GeoJSON API.'
+

@@ -1,0 +1,157 @@
+<?php
+
+/**
+ * @file
+ * Install and schema hooks for Secure Location Map.
+ */
+
+use Drupal\user\Entity\Role;
+
+/**
+ * Implements hook_schema().
+ */
+function secure_location_map_schema(): array {
+  $schema['secure_location_map_dataset'] = [
+    'description' => 'Dataset configurations for Secure Location Map.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'not null' => TRUE],
+      'machine_name' => ['type' => 'varchar', 'length' => 128, 'not null' => TRUE],
+      'label' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'description' => ['type' => 'text', 'not null' => FALSE],
+      'organization_name' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'organization_url' => ['type' => 'varchar', 'length' => 2048, 'not null' => FALSE],
+      'default_lat' => ['type' => 'float', 'not null' => TRUE],
+      'default_lng' => ['type' => 'float', 'not null' => TRUE],
+      'default_zoom' => ['type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 7],
+      'allowed_types' => ['type' => 'text', 'not null' => TRUE],
+      'public_path' => ['type' => 'varchar', 'length' => 255, 'not null' => FALSE],
+      'marker_colors' => ['type' => 'text', 'not null' => FALSE],
+      'created' => ['type' => 'int', 'not null' => TRUE],
+      'changed' => ['type' => 'int', 'not null' => TRUE],
+      'status' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'machine_name' => ['machine_name'],
+    ],
+    'indexes' => [
+      'status' => ['status'],
+    ],
+  ];
+
+  $schema['secure_location_map_location'] = [
+    'description' => 'Locations scoped to a Secure Location Map dataset.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'not null' => TRUE],
+      'dataset_id' => ['type' => 'int', 'not null' => TRUE],
+      'external_id' => ['type' => 'varchar', 'length' => 255, 'not null' => FALSE],
+      'name' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'type' => ['type' => 'varchar', 'length' => 128, 'not null' => FALSE],
+      'category' => ['type' => 'varchar', 'length' => 255, 'not null' => FALSE],
+      'address' => ['type' => 'varchar', 'length' => 1024, 'not null' => FALSE],
+      'city' => ['type' => 'varchar', 'length' => 255, 'not null' => FALSE],
+      'state' => ['type' => 'varchar', 'length' => 255, 'not null' => FALSE],
+      'zip' => ['type' => 'varchar', 'length' => 32, 'not null' => FALSE],
+      'country' => ['type' => 'varchar', 'length' => 128, 'not null' => FALSE],
+      'latitude' => ['type' => 'float', 'not null' => TRUE],
+      'longitude' => ['type' => 'float', 'not null' => TRUE],
+      'website' => ['type' => 'varchar', 'length' => 2048, 'not null' => FALSE],
+      'phone' => ['type' => 'varchar', 'length' => 128, 'not null' => FALSE],
+      'email' => ['type' => 'varchar', 'length' => 320, 'not null' => FALSE],
+      'hours' => ['type' => 'text', 'not null' => FALSE],
+      'rating' => ['type' => 'float', 'not null' => FALSE],
+      'review_count' => ['type' => 'int', 'not null' => FALSE],
+      'price_range' => ['type' => 'varchar', 'length' => 128, 'not null' => FALSE],
+      'is_verified' => ['type' => 'int', 'size' => 'tiny', 'not null' => FALSE],
+      'metadata' => ['type' => 'text', 'size' => 'big', 'not null' => FALSE],
+      'status' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1],
+      'created' => ['type' => 'int', 'not null' => TRUE],
+      'changed' => ['type' => 'int', 'not null' => TRUE],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'dataset_id' => ['dataset_id'],
+      'dataset_status' => ['dataset_id', 'status'],
+      'dataset_external_id' => ['dataset_id', 'external_id'],
+      'dataset_type' => ['dataset_id', 'type'],
+      'coordinates' => ['latitude', 'longitude'],
+    ],
+  ];
+
+  $schema['secure_location_map_import'] = [
+    'description' => 'CSV import history for Secure Location Map datasets.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'not null' => TRUE],
+      'dataset_id' => ['type' => 'int', 'not null' => TRUE],
+      'filename' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'file_uri' => ['type' => 'varchar', 'length' => 2048, 'not null' => FALSE],
+      'import_mode' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+      'rows_total' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'rows_imported' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'rows_updated' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'rows_failed' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'errors' => ['type' => 'text', 'size' => 'big', 'not null' => FALSE],
+      'created_by' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'created' => ['type' => 'int', 'not null' => TRUE],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'dataset_id' => ['dataset_id'],
+      'dataset_created' => ['dataset_id', 'created'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function secure_location_map_install(): void {
+  $database = \Drupal::database();
+  $time = \Drupal::time()->getRequestTime();
+  $defaults = [
+    [
+      'machine_name' => 'press_forward',
+      'label' => 'Press Forward Local Media Finder',
+      'description' => 'Local newspaper, radio, and television locations.',
+      'organization_name' => 'Press Forward',
+      'organization_url' => 'https://pressforward.org',
+      'default_lat' => 41.2033,
+      'default_lng' => -77.1945,
+      'default_zoom' => 7,
+      'allowed_types' => json_encode(['newspaper', 'radio', 'television']),
+      'public_path' => '/local-media-finder',
+      'marker_colors' => json_encode(['newspaper' => '#2563eb', 'radio' => '#dc2626', 'television' => '#7c3aed']),
+      'created' => $time,
+      'changed' => $time,
+      'status' => 1,
+    ],
+    [
+      'machine_name' => 'bankcura',
+      'label' => 'Bank and Credit Union Finder',
+      'description' => 'Bank and credit union locations.',
+      'organization_name' => 'Bankcura',
+      'organization_url' => '',
+      'default_lat' => 39.8283,
+      'default_lng' => -98.5795,
+      'default_zoom' => 4,
+      'allowed_types' => json_encode(['bank', 'credit_union']),
+      'public_path' => '/finance-location-finder',
+      'marker_colors' => json_encode(['bank' => '#0f766e', 'credit_union' => '#d97706']),
+      'created' => $time,
+      'changed' => $time,
+      'status' => 1,
+    ],
+  ];
+
+  foreach ($defaults as $dataset) {
+    $database->insert('secure_location_map_dataset')->fields($dataset)->execute();
+  }
+
+  foreach (['anonymous', 'authenticated'] as $role_id) {
+    if ($role = Role::load($role_id)) {
+      $role->grantPermission('view secure location map')->save();
+    }
+  }
+}

@@ -1,0 +1,54 @@
+leaflet:
+  remote: https://leafletjs.com/
+  version: 1.9.4
+  license:
+    name: BSD-2-Clause
+    url: https://github.com/Leaflet/Leaflet/blob/main/LICENSE
+    gpl-compatible: true
+  css:
+    theme:
+      https://unpkg.com/leaflet@1.9.4/dist/leaflet.css: { type: external, minified: true }
+  js:
+    https://unpkg.com/leaflet@1.9.4/dist/leaflet.js: { type: external, minified: true }
+
+markercluster:
+  remote: https://github.com/Leaflet/Leaflet.markercluster
+  version: 1.5.3
+  license:
+    name: MIT
+    url: https://github.com/Leaflet/Leaflet.markercluster/blob/master/MIT-LICENCE.txt
+    gpl-compatible: true
+  css:
+    theme:
+      https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css: { type: external, minified: true }
+      https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css: { type: external, minified: true }
+  js:
+    https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js: { type: external, minified: true }
+  dependencies:
+    - secure_location_map/leaflet
+
+frontend:
+  css:
+    theme:
+      css/secure-location-map.css: {}
+  js:
+    js/secure-location-map.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
+    - secure_location_map/leaflet
+    - secure_location_map/markercluster
+
+admin:
+  css:
+    theme:
+      css/secure-location-map.admin.css: {}
+
+report:
+  css:
+    theme:
+      css/secure-location-map.report.css: {}
+  dependencies:
+    - secure_location_map/frontend
+

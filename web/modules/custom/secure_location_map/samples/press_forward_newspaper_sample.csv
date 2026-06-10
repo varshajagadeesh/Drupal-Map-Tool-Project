@@ -1,0 +1,4 @@
+cid,title,categories,website,phone,review_rating,review_count,address,city,postal_code,state,country,latitude,longitude
+pf-news-001,Example Daily News,"[""Newspaper publisher""]",https://example.com/news,215-555-0100,4.6,120,100 Market Street,Philadelphia,19106,Pennsylvania,US,39.9509,-75.1467
+pf-news-002,Community Gazette,"[""Newspaper publisher""]",https://example.com/gazette,717-555-0101,4.2,42,20 State Street,Harrisburg,17101,Pennsylvania,US,40.2628,-76.8825
+

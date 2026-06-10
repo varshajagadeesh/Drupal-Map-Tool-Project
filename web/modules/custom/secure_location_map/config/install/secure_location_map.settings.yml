@@ -1,0 +1,8 @@
+default_result_limit: 500
+max_api_result_limit: 2000
+enable_marker_clustering: true
+enable_public_email: false
+default_radius_options: '5,10,25,50,100'
+map_tile_url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+attribution_text: '&copy; OpenStreetMap contributors'
+

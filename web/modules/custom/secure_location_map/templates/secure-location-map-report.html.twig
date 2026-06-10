@@ -1,0 +1,40 @@
+{#
+/**
+ * @file
+ * Report-ready map wrapper.
+ */
+#}
+<article class="slm-report">
+  <header class="slm-report__header">
+    <div>
+      <p class="slm-report__eyebrow">Location map report</p>
+      <h1>{{ dataset.label }}</h1>
+      <p class="slm-report__meta">
+        {% if dataset.organization_name %}<span>{{ dataset.organization_name }}</span>{% endif %}
+        <span>Generated {{ generated_date }}</span>
+        <span><strong class="slm-report-visible-count">0</strong> loaded locations</span>
+      </p>
+    </div>
+    <div class="slm-report__actions">
+      <button class="slm-button slm-print" type="button">Print / Save as PDF</button>
+      <button class="slm-button slm-copy-url" type="button">Copy report URL</button>
+    </div>
+  </header>
+  <div class="slm-report__instructions">
+    Adjust search and filters, wait for the visible count to update, then print to PDF or capture the map and legend.
+  </div>
+  {% include '@secure_location_map/secure-location-map.html.twig' with {
+    dataset: dataset,
+    api_url: api_url,
+    report_url: report_url,
+    options: options
+  } only %}
+  <section class="slm-report__legend" aria-label="Map legend">
+    <h2>Legend</h2>
+    <ul>
+      {% for type in dataset.allowed_types %}
+        <li><span class="slm-legend-dot" data-legend-type="{{ type }}"></span>{{ type|replace({'_': ' '})|title }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+</article>

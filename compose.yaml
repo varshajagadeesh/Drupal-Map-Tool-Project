@@ -1,0 +1,48 @@
+services:
+  drupal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: secure-location-map-drupal
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      SLM_DB_HOST: database
+      SLM_DB_NAME: drupal
+      SLM_DB_USER: drupal
+      SLM_DB_PASSWORD: drupal
+      SLM_ADMIN_USER: admin
+      SLM_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web/modules/custom/secure_location_map:/opt/drupal/web/modules/custom/secure_location_map
+      - ./newspaper.csv:/data/newspaper.csv:ro
+      - ./radio.csv:/data/radio.csv:ro
+      - ./television.csv:/data/television.csv:ro
+      - ./banks.csv:/data/banks.csv:ro
+      - drupal_sites:/opt/drupal/web/sites
+    restart: unless-stopped
+
+  database:
+    image: mariadb:11.4
+    container_name: secure-location-map-database
+    environment:
+      MARIADB_DATABASE: drupal
+      MARIADB_USER: drupal
+      MARIADB_PASSWORD: drupal
+      MARIADB_ROOT_PASSWORD: local-root-password
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - database_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  database_data:
+  drupal_sites:
+

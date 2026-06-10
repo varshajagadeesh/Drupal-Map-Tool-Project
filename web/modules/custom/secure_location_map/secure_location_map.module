@@ -1,0 +1,52 @@
+<?php
+
+/**
+ * @file
+ * Hooks for the Secure Location Map module.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function secure_location_map_theme($existing, $type, $theme, $path): array {
+  return [
+    'secure_location_map' => [
+      'variables' => [
+        'dataset' => [],
+        'api_url' => '',
+        'report_url' => '',
+        'options' => [],
+      ],
+      'template' => 'secure-location-map',
+    ],
+    'secure_location_map_report' => [
+      'variables' => [
+        'dataset' => [],
+        'api_url' => '',
+        'report_url' => '',
+        'options' => [],
+        'generated_date' => '',
+      ],
+      'template' => 'secure-location-map-report',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function secure_location_map_preprocess_html(array &$variables): void {
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  $map_routes = [
+    'secure_location_map.press_forward',
+    'secure_location_map.bankcura',
+    'secure_location_map.map',
+    'secure_location_map.report',
+  ];
+  if (in_array($route_name, $map_routes, TRUE)) {
+    $variables['attributes']['class'][] = 'slm-public-map-page';
+  }
+  if ($route_name === 'secure_location_map.report') {
+    $variables['attributes']['class'][] = 'slm-report-page';
+  }
+}

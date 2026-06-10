@@ -1,0 +1,10 @@
+.git
+.gitignore
+desktop.ini
+docker-data
+web/core
+web/sites
+web/themes/contrib
+web/modules/contrib
+vendor
+

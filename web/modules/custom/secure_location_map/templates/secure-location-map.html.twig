@@ -1,0 +1,109 @@
+{#
+/**
+ * @file
+ * Public and block map application.
+ */
+#}
+<section
+  class="slm-app{{ options.compact ? ' slm-app--compact' : '' }}{{ options.report ? ' slm-app--report' : '' }}"
+  data-dataset="{{ dataset.machine_name }}"
+  data-api-url="{{ api_url }}"
+  data-report-url="{{ report_url }}"
+  data-default-lat="{{ dataset.default_lat }}"
+  data-default-lng="{{ dataset.default_lng }}"
+  data-default-zoom="{{ dataset.default_zoom }}"
+  data-allowed-types="{{ dataset.allowed_types|json_encode|e('html_attr') }}"
+  data-marker-colors="{{ dataset.marker_colors|json_encode|e('html_attr') }}"
+  data-radius-options="{{ options.radius_options|json_encode|e('html_attr') }}"
+  data-default-radius="{{ options.default_radius|default('') }}"
+  data-tile-url="{{ options.tile_url|e('html_attr') }}"
+  data-attribution="{{ options.attribution|e('html_attr') }}"
+  data-clustering="{{ options.clustering ? '1' : '0' }}"
+  data-show-results="{{ options.show_results ? '1' : '0' }}"
+  data-show-filters="{{ options.show_filters ? '1' : '0' }}"
+  data-show-footer="{{ options.show_footer ? '1' : '0' }}">
+
+  <header class="slm-header">
+    <div class="slm-brand">
+      <span class="slm-brand__icon" aria-hidden="true"></span>
+      <div>
+        <h2 class="slm-title">{{ dataset.label }}</h2>
+        {% if dataset.organization_name %}
+          {% if dataset.organization_url %}
+            <a class="slm-org" href="{{ dataset.organization_url }}" rel="noopener noreferrer" target="_blank">{{ dataset.organization_name }}</a>
+          {% else %}
+            <span class="slm-org">{{ dataset.organization_name }}</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% if not options.report %}
+      <a class="slm-report-link" href="{{ report_url }}">Report view</a>
+    {% endif %}
+  </header>
+
+  {% if options.show_filters %}
+    <div class="slm-toolbar" role="search">
+      <div class="slm-toolbar__group slm-toolbar__group--search">
+        <span class="slm-toolbar__label">Find a location</span>
+        <div class="slm-search">
+        <label class="visually-hidden" for="slm-search-{{ dataset.machine_name }}">Search locations</label>
+        <input id="slm-search-{{ dataset.machine_name }}" class="slm-search__input" type="search" placeholder="Search name, city, or ZIP" autocomplete="postal-code">
+        <button class="slm-button slm-search__button" type="button">Search</button>
+        </div>
+      </div>
+      <div class="slm-toolbar__group">
+        <span class="slm-toolbar__label">Location type</span>
+        <div class="slm-type-filters" aria-label="Filter by location type">
+          <button class="slm-filter is-active" type="button" data-type="" aria-pressed="true">All</button>
+          {% for type in dataset.allowed_types %}
+            <button class="slm-filter" type="button" data-type="{{ type }}" aria-pressed="false">{{ type|replace({'_': ' '})|title }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="slm-toolbar__group">
+        <span class="slm-toolbar__label">Distance</span>
+        <div class="slm-radius-controls">
+          <label class="visually-hidden" for="slm-radius-{{ dataset.machine_name }}">Radius</label>
+          <select id="slm-radius-{{ dataset.machine_name }}" class="slm-radius" aria-label="Search radius">
+            <option value="">Any distance</option>
+            {% for radius in options.radius_options %}
+              <option value="{{ radius }}"{{ options.default_radius == radius ? ' selected' : '' }}>{{ radius }} miles</option>
+            {% endfor %}
+          </select>
+          <button class="slm-button slm-locate" type="button">Use my location</button>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="slm-message slm-loading" role="status">Loading locations...</div>
+  <div class="slm-message slm-empty" role="status" hidden>No locations match these filters.</div>
+  <div class="slm-message slm-error" role="alert" hidden>Locations could not be loaded. Please try again.</div>
+
+  <div class="slm-content">
+    {% if options.show_results %}
+      <aside class="slm-sidebar" aria-label="Location results">
+        <div class="slm-results-heading">
+          <strong>Results</strong>
+          <span class="slm-result-count" aria-live="polite">0 loaded</span>
+        </div>
+        <div class="slm-details" aria-live="polite" hidden></div>
+        <div class="slm-results"></div>
+        <p class="slm-results-note" hidden></p>
+      </aside>
+    {% endif %}
+    <div class="slm-map" role="region" aria-label="{{ dataset.label }} interactive location map" tabindex="0"></div>
+  </div>
+
+  {% if options.show_footer %}
+    <footer class="slm-footer">
+      <span><strong class="slm-footer-total">0</strong> loaded of <strong class="slm-footer-dataset-total">-</strong> total locations</span>
+      <span>Active datasets: 1</span>
+      <span>Dataset: {{ dataset.label }}</span>
+      <span class="slm-footer-radius">Radius: Any distance</span>
+      <span>Updated: <span class="slm-updated">-</span></span>
+      <span>Secure Location Map Drupal module</span>
+    </footer>
+  {% endif %}
+</section>

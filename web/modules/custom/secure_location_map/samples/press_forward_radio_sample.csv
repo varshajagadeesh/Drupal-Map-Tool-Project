@@ -1,0 +1,3 @@
+cid,title,categories,website,phone,review_rating,review_count,address,city,postal_code,state,country,latitude,longitude
+pf-radio-001,Example Public Radio,"[""Radio broadcaster""]",https://example.com/radio,412-555-0102,4.8,90,500 Liberty Avenue,Pittsburgh,15222,Pennsylvania,US,40.4414,-80.0031
+

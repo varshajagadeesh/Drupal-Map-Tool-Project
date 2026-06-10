@@ -1,0 +1,56 @@
+.secure-location-map-dashboard .responsive-enabled {
+  border: 1px solid #d8e0e8;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(20, 49, 80, .06);
+  overflow: hidden;
+}
+
+.secure-location-map-dashboard table th {
+  white-space: nowrap;
+}
+
+.secure-location-map-dashboard table td {
+  vertical-align: middle;
+}
+
+.secure-location-map-dashboard code {
+  background: #edf4fb;
+  border-radius: 5px;
+  color: #163d66;
+  padding: 3px 6px;
+}
+
+.slm-admin-status {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+}
+
+.slm-admin-status--active {
+  background: #dff6e7;
+  color: #126936;
+}
+
+.slm-admin-status--disabled {
+  background: #f0f1f2;
+  color: #58616b;
+}
+
+.secure-location-map-admin-summary {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.secure-location-map-admin-summary > * {
+  background: #fff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+form.secure-location-map-form fieldset {
+  border-radius: 8px;
+}

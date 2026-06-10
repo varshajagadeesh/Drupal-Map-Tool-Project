@@ -1,0 +1,4 @@
+external_id,name,type,category,website,phone,hours,rating,review_count,address,city,state,zip,country,latitude,longitude
+bank-001,Example Community Bank,bank,Bank,https://example.com/bank,202-555-0104,"Monday-Friday 9 AM-5 PM",4.4,135,100 Main Street,Washington,DC,20001,US,38.9072,-77.0369
+cu-001,Example Federal Credit Union,credit_union,Credit union,https://example.com/cu,617-555-0105,"Monday-Friday 8 AM-4 PM",4.7,82,200 Harbor Street,Boston,MA,02110,US,42.3601,-71.0589
+

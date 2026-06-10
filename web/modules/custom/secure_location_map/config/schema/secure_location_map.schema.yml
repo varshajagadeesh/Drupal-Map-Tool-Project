@@ -1,0 +1,60 @@
+secure_location_map.settings:
+  type: config_object
+  label: 'Secure Location Map settings'
+  mapping:
+    default_result_limit:
+      type: integer
+      label: 'Default result limit'
+    max_api_result_limit:
+      type: integer
+      label: 'Maximum API result limit'
+    enable_marker_clustering:
+      type: boolean
+      label: 'Enable marker clustering'
+    enable_public_email:
+      type: boolean
+      label: 'Enable public email display by default'
+    default_radius_options:
+      type: string
+      label: 'Default radius options'
+    map_tile_url:
+      type: string
+      label: 'Map tile URL'
+    attribution_text:
+      type: string
+      label: 'Attribution text'
+
+block.settings.secure_location_map:
+  type: block_settings
+  label: 'Secure Location Map block settings'
+  mapping:
+    dataset:
+      type: string
+      label: 'Dataset machine name'
+    title_override:
+      type: string
+      label: 'Title override'
+    default_radius:
+      type: ignore
+      label: 'Default radius'
+    default_lat:
+      type: ignore
+      label: 'Default latitude'
+    default_lng:
+      type: ignore
+      label: 'Default longitude'
+    default_zoom:
+      type: ignore
+      label: 'Default zoom'
+    show_results:
+      type: boolean
+      label: 'Show result list'
+    show_filters:
+      type: boolean
+      label: 'Show filters'
+    show_footer:
+      type: boolean
+      label: 'Show footer'
+    compact:
+      type: boolean
+      label: 'Compact mode'

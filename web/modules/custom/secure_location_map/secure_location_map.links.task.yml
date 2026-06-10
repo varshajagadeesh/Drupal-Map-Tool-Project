@@ -1,0 +1,10 @@
+secure_location_map.admin_tab:
+  title: 'Datasets'
+  route_name: secure_location_map.admin
+  base_route: secure_location_map.admin
+
+secure_location_map.settings_tab:
+  title: 'Settings'
+  route_name: secure_location_map.settings
+  base_route: secure_location_map.admin
+

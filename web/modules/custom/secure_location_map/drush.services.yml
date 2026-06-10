@@ -1,0 +1,7 @@
+services:
+  secure_location_map.commands:
+    class: Drupal\secure_location_map\Commands\SecureLocationMapCommands
+    arguments: ['@secure_location_map.dataset_repository', '@secure_location_map.csv_import']
+    tags:
+      - { name: drush.command }
+

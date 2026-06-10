@@ -1,0 +1,86 @@
+secure_location_map.admin:
+  path: '/admin/config/services/secure-location-map'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\AdminDashboardController::dashboard'
+    _title: 'Secure Location Map'
+  requirements:
+    _permission: 'administer secure location map'
+
+secure_location_map.dataset_add:
+  path: '/admin/config/services/secure-location-map/datasets/add'
+  defaults:
+    _form: '\Drupal\secure_location_map\Form\DatasetForm'
+    _title: 'Add map dataset'
+  requirements:
+    _permission: 'administer secure location map'
+
+secure_location_map.dataset_edit:
+  path: '/admin/config/services/secure-location-map/datasets/{dataset_id}/edit'
+  defaults:
+    _form: '\Drupal\secure_location_map\Form\DatasetForm'
+    _title: 'Edit map dataset'
+  requirements:
+    _permission: 'administer secure location map'
+    dataset_id: '\d+'
+
+secure_location_map.csv_upload:
+  path: '/admin/config/services/secure-location-map/datasets/{dataset_id}/upload'
+  defaults:
+    _form: '\Drupal\secure_location_map\Form\CsvUploadForm'
+    _title: 'Upload location CSV'
+  requirements:
+    _permission: 'upload secure location map csv'
+    dataset_id: '\d+'
+
+secure_location_map.settings:
+  path: '/admin/config/services/secure-location-map/settings'
+  defaults:
+    _form: '\Drupal\secure_location_map\Form\SettingsForm'
+    _title: 'Secure Location Map settings'
+  requirements:
+    _permission: 'administer secure location map'
+
+secure_location_map.press_forward:
+  path: '/local-media-finder'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\MapPageController::pressForward'
+    _title_callback: '\Drupal\secure_location_map\Controller\MapPageController::pressForwardTitle'
+  requirements:
+    _permission: 'view secure location map'
+
+secure_location_map.bankcura:
+  path: '/finance-location-finder'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\MapPageController::bankcura'
+    _title_callback: '\Drupal\secure_location_map\Controller\MapPageController::bankcuraTitle'
+  requirements:
+    _permission: 'view secure location map'
+
+secure_location_map.map:
+  path: '/secure-location-map/{dataset_machine_name}'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\MapPageController::map'
+    _title_callback: '\Drupal\secure_location_map\Controller\MapPageController::title'
+  requirements:
+    _permission: 'view secure location map'
+    dataset_machine_name: '[a-z0-9_]+'
+
+secure_location_map.report:
+  path: '/secure-location-map/{dataset_machine_name}/report'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\ReportController::report'
+    _title_callback: '\Drupal\secure_location_map\Controller\ReportController::title'
+  requirements:
+    _permission: 'view secure location map'
+    dataset_machine_name: '[a-z0-9_]+'
+
+secure_location_map.api:
+  path: '/secure-location-map/api/{dataset_machine_name}/locations'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\MapApiController::locations'
+  requirements:
+    _permission: 'view secure location map'
+    dataset_machine_name: '[a-z0-9_]+'
+  options:
+    no_cache: true
+

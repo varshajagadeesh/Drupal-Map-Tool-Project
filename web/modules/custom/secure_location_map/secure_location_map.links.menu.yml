@@ -1,0 +1,6 @@
+secure_location_map.admin:
+  title: 'Secure Location Map'
+  description: 'Manage location map datasets and imports.'
+  route_name: secure_location_map.admin
+  parent: system.admin_config_services
+
