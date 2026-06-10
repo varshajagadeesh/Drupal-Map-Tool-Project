@@ -88,9 +88,16 @@
           <strong>Results</strong>
           <span class="slm-result-count" aria-live="polite">0 loaded</span>
         </div>
-        <div class="slm-details" aria-live="polite" hidden></div>
         <div class="slm-results"></div>
-        <p class="slm-results-note" hidden></p>
+        <nav class="slm-results-pagination" aria-label="Location result pages" hidden>
+          <button class="slm-button slm-page-previous" type="button" aria-label="Previous results page">&lsaquo;</button>
+          <label class="slm-page-control">
+            <span class="visually-hidden">Current results page</span>
+            <input class="slm-page-input" type="number" min="1" inputmode="numeric" aria-label="Current results page">
+            <span class="slm-page-total" aria-live="polite"></span>
+          </label>
+          <button class="slm-button slm-page-next" type="button" aria-label="Next results page">&rsaquo;</button>
+        </nav>
       </aside>
     {% endif %}
     <div class="slm-map" role="region" aria-label="{{ dataset.label }} interactive location map" tabindex="0"></div>

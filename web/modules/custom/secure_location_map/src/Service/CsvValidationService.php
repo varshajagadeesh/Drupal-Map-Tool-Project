@@ -115,11 +115,25 @@ class CsvValidationService {
       (string) ($options['dataset_machine_name'] ?? ''),
     );
 
-    foreach (['attributes', 'socials', 'owner_name', 'description', 'rating_distribution', 'plus_code', 'timezone', 'popular_times'] as $field) {
+    foreach ([
+      'attributes',
+      'socials',
+      'owner_name',
+      'description',
+      'rating_distribution',
+      'plus_code',
+      'timezone',
+      'popular_times',
+      'reservations',
+      'order_online',
+      'has_menu',
+      'created_at',
+      'updated_at',
+    ] as $field) {
       if (!isset($source_row[$field]) || trim((string) $source_row[$field]) === '') {
         continue;
       }
-      $metadata[$field] = in_array($field, ['attributes', 'socials', 'rating_distribution', 'popular_times'], TRUE)
+      $metadata[$field] = in_array($field, ['attributes', 'socials', 'rating_distribution', 'popular_times', 'reservations', 'order_online'], TRUE)
         ? $this->parseJsonLike($source_row[$field], $field, $metadata, $warnings)
         : trim((string) $source_row[$field]);
     }
