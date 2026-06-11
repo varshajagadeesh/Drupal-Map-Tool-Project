@@ -184,6 +184,9 @@
     const category = Array.isArray(properties.categories) && properties.categories.length
       ? properties.categories.map(escapeHtml).join(', ')
       : escapeHtml(String(properties.category || typeLabel(properties.type)).trim());
+    const verifiedBadge = properties.is_verified === true
+      ? `<span class="slm-verified-badge" aria-label="Verified listing">&#10003; Verified</span>`
+      : '';
     const distance = properties.distance_miles !== undefined
       ? `<span class="slm-profile-card__secondary">${escapeHtml(properties.distance_miles)} miles from your location</span>`
       : '';
@@ -203,6 +206,7 @@
           <h3 title="${escapeHtml(properties.name)}">${escapeHtml(properties.name)}</h3>
           ${ratingLine}
           <span class="slm-profile-card__type">${category}</span>
+          ${verifiedBadge}
         </div>
         <button class="slm-profile-card__close" type="button" aria-label="Close location details">&times;</button>
       </header>
@@ -339,6 +343,15 @@
         const badge = document.createElement('span');
         badge.className = 'slm-badge';
         badge.textContent = typeLabel(properties.type || properties.category);
+        const badgeRow = document.createElement('div');
+        badgeRow.className = 'slm-result__badges';
+        badgeRow.append(badge);
+        if (properties.is_verified === true) {
+          const verified = document.createElement('span');
+          verified.className = 'slm-badge slm-badge--verified';
+          verified.textContent = '✓ Verified';
+          badgeRow.append(verified);
+        }
         const name = document.createElement('strong');
         name.textContent = properties.name;
         const location = document.createElement('span');
@@ -346,7 +359,7 @@
         const distance = document.createElement('span');
         distance.className = 'slm-result__distance';
         distance.textContent = properties.distance_miles !== undefined ? `${properties.distance_miles} miles away` : '';
-        button.append(badge, name, location, distance);
+        button.append(badgeRow, name, location, distance);
         button.addEventListener('click', () => selectLocation(properties.id));
         resultsElement.append(button);
       });
