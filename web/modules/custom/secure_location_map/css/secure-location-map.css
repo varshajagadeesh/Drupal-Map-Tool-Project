@@ -542,7 +542,7 @@
   min-width: 0;
 }
 
-.slm-page-input {
+.slm-app .slm-page-input {
   appearance: textfield;
   background: #fff;
   border: 1px solid #b7c5d3;
@@ -556,16 +556,16 @@
   min-height: var(--slm-page-control-size);
   padding: 4px;
   text-align: center;
-  width: 38px;
+  width: var(--slm-page-control-size);
 }
 
-.slm-page-input::-webkit-inner-spin-button,
-.slm-page-input::-webkit-outer-spin-button {
+.slm-app .slm-page-input::-webkit-inner-spin-button,
+.slm-app .slm-page-input::-webkit-outer-spin-button {
   appearance: none;
   margin: 0;
 }
 
-.slm-page-input:focus {
+.slm-app .slm-page-input:focus {
   border-color: var(--slm-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, .13);
   outline: none;

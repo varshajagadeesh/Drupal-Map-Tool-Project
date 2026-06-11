@@ -78,6 +78,8 @@
     }
   };
 
+  const formatPhone = (value) => String(value || '').trim().replace(/\)\s*/g, ') ');
+
   const detailIcon = (name) => {
     const paths = {
       address: '<path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11Z"/><circle cx="12" cy="10" r="2.2"/>',
@@ -168,7 +170,7 @@
       : '';
     const phoneText = String(properties.phone || '').trim();
     const phone = phoneText
-      ? `<a href="tel:${escapeHtml(phoneText.replace(/[^\d+(). -]/g, ''))}">${escapeHtml(phoneText)}</a>`
+      ? `<a href="tel:${escapeHtml(phoneText.replace(/[^\d+(). -]/g, ''))}">${escapeHtml(formatPhone(phoneText))}</a>`
       : '';
     const ratingValue = Math.min(5, Math.max(0, Number(properties.rating) || 0));
     const reviewCount = Math.max(0, Number(properties.review_count) || 0);
