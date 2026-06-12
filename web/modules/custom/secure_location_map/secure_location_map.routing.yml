@@ -84,3 +84,12 @@ secure_location_map.api:
   options:
     no_cache: true
 
+secure_location_map.geocode:
+  path: '/secure-location-map/api/{dataset_machine_name}/geocode'
+  defaults:
+    _controller: '\Drupal\secure_location_map\Controller\GeocodingController::geocode'
+  requirements:
+    _permission: 'view secure location map'
+    dataset_machine_name: '[a-z0-9_]+'
+  options:
+    no_cache: true

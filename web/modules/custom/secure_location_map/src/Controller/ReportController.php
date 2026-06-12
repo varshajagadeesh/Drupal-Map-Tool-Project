@@ -38,6 +38,7 @@ class ReportController extends ControllerBase {
       '#theme' => 'secure_location_map_report',
       '#dataset' => $dataset,
       '#api_url' => Url::fromRoute('secure_location_map.api', ['dataset_machine_name' => $dataset_machine_name])->toString(),
+      '#geocode_url' => Url::fromRoute('secure_location_map.geocode', ['dataset_machine_name' => $dataset_machine_name])->toString(),
       '#report_url' => Url::fromRoute('secure_location_map.report', ['dataset_machine_name' => $dataset_machine_name])->toString(),
       '#generated_date' => $this->dateFormatter->format(time(), 'long'),
       '#options' => [

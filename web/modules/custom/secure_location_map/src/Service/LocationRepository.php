@@ -98,13 +98,14 @@ class LocationRepository {
     }
 
     $bbox = $this->parseBbox($filters['bbox'] ?? NULL);
-    $has_radius = is_numeric($filters['lat'] ?? NULL)
+    $has_origin = is_numeric($filters['lat'] ?? NULL)
       && is_numeric($filters['lng'] ?? NULL)
-      && is_numeric($filters['radius'] ?? NULL)
       && (float) $filters['lat'] >= -90
       && (float) $filters['lat'] <= 90
       && (float) $filters['lng'] >= -180
-      && (float) $filters['lng'] <= 180
+      && (float) $filters['lng'] <= 180;
+    $has_radius = $has_origin
+      && is_numeric($filters['radius'] ?? NULL)
       && (float) $filters['radius'] > 0
       && (float) $filters['radius'] <= 25000;
     if ($has_radius) {
@@ -117,27 +118,38 @@ class LocationRepository {
     }
 
     $query->orderBy('name');
-    $query->range(0, $has_radius ? min($limit * 5, 10000) : $limit);
-    $results = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    if (!$has_origin) {
+      $query->range(0, $limit);
+    }
+    $statement = $query->execute();
 
-    if ($has_radius) {
-      $origin_lat = (float) $filters['lat'];
-      $origin_lng = (float) $filters['lng'];
-      $radius = (float) $filters['radius'];
-      foreach ($results as $key => &$result) {
-        $miles = $this->distance->miles($origin_lat, $origin_lng, (float) $result['latitude'], (float) $result['longitude']);
-        if ($miles > $radius) {
-          unset($results[$key]);
-          continue;
-        }
-        $result['distance_miles'] = round($miles, 2);
-      }
-      unset($result);
-      usort($results, static fn(array $a, array $b): int => ($a['distance_miles'] ?? 0) <=> ($b['distance_miles'] ?? 0));
-      $results = array_slice($results, 0, $limit);
+    if (!$has_origin) {
+      return array_values($statement->fetchAll(\PDO::FETCH_ASSOC));
     }
 
-    return array_values($results);
+    $origin_lat = (float) $filters['lat'];
+    $origin_lng = (float) $filters['lng'];
+    $radius = $has_radius ? (float) $filters['radius'] : NULL;
+    $nearest = new \SplPriorityQueue();
+    $nearest->setExtractFlags(\SplPriorityQueue::EXTR_DATA);
+    while ($result = $statement->fetchAssoc()) {
+      $miles = $this->distance->miles($origin_lat, $origin_lng, (float) $result['latitude'], (float) $result['longitude']);
+      if ($radius !== NULL && $miles > $radius) {
+        continue;
+      }
+      $result['distance_miles'] = round($miles, 2);
+      $nearest->insert($result, $miles);
+      if ($nearest->count() > $limit) {
+        $nearest->extract();
+      }
+    }
+
+    $results = [];
+    while (!$nearest->isEmpty()) {
+      $results[] = $nearest->extract();
+    }
+    usort($results, static fn(array $a, array $b): int => ($a['distance_miles'] <=> $b['distance_miles']) ?: strcasecmp($a['name'], $b['name']));
+    return $results;
   }
 
   /**

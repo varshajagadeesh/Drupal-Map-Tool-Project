@@ -23,6 +23,40 @@
 
   const typeLabel = (value) => String(value || 'Location').replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+  const normalizeRadius = (value) => {
+    const text = String(value ?? '').trim();
+    if (text === '') return '';
+    const miles = Number(text);
+    return Number.isFinite(miles) && miles >= 0.1 && miles <= 25000 ? String(miles) : null;
+  };
+
+  const DEFAULT_TYPE_COLORS = {
+    newspaper: '#f59e0b',
+    radio: '#2563eb',
+    television: '#8b5cf6',
+    bank: '#0f766e',
+    credit_union: '#dc2626'
+  };
+
+  const typeColor = (type, configuredColors = {}) => {
+    const configured = configuredColors[type] || DEFAULT_TYPE_COLORS[type] || '#2563eb';
+    return /^#[0-9a-f]{3,8}$/i.test(configured) ? configured : '#2563eb';
+  };
+
+  const typeIcon = (type, className = 'slm-type-icon') => {
+    const paths = {
+      newspaper: '<path d="M6 4h11a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2V5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+      radio: '<rect x="4" y="8" width="16" height="11" rx="2"/><path d="m7 8 9-5M8 12h5M8 15h3"/><circle cx="16.5" cy="14" r="2.5"/>',
+      television: '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="m9 3 3 3 3-3M9 21h6"/>',
+      bank: '<path d="m4 9 8-5 8 5M5 10h14M7 10v7m5-7v7m5-7v7M4 20h16M5 17h14"/>',
+      credit_union: '<path d="m4 9 8-5 8 5M5 10h14M7 10v7m5-7v7m5-7v7M4 20h16M5 17h14"/>',
+      all: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+      location: '<path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11Z"/><circle cx="12" cy="10" r="2.2"/>'
+    };
+    const key = Object.hasOwn(paths, type) ? type : 'location';
+    return `<svg class="${className}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[key]}</svg>`;
+  };
+
   const formatAddress = (properties) => {
     const address = String(properties.address || '').trim();
     const addressLower = address.toLocaleLowerCase();
@@ -78,7 +112,10 @@
     }
   };
 
-  const formatPhone = (value) => String(value || '').trim().replace(/\)\s*/g, ') ');
+  const formatPhone = (value) => String(value || '')
+    .trim()
+    .replace(/^\+1\s*/, '+1 ')
+    .replace(/\)\s*/g, ') ');
 
   const detailIcon = (name) => {
     const paths = {
@@ -143,7 +180,7 @@
     }).join('');
   };
 
-  const detailsHtml = (properties) => {
+  const detailsHtml = (properties, markerColors = {}) => {
     const address = escapeHtml(formatAddress(properties));
     const hours = escapeHtml(formatHours(properties.hours));
     const priceRange = escapeHtml(String(properties.price_range || '').trim());
@@ -184,8 +221,10 @@
     const category = Array.isArray(properties.categories) && properties.categories.length
       ? properties.categories.map(escapeHtml).join(', ')
       : escapeHtml(String(properties.category || typeLabel(properties.type)).trim());
+    const color = typeColor(properties.type, markerColors);
+    const popupTypeIcon = typeIcon(properties.type, 'slm-type-icon');
     const distance = properties.distance_miles !== undefined
-      ? `<span class="slm-profile-card__secondary">${escapeHtml(properties.distance_miles)} miles from your location</span>`
+      ? `<span class="slm-profile-card__secondary">${escapeHtml(properties.distance_miles)} miles from starting point</span>`
       : '';
     const addressDetails = `${address}${country && !address.toLocaleLowerCase().includes(country.toLocaleLowerCase()) ? `<span class="slm-profile-card__secondary">${country}</span>` : ''}${distance}`;
     const menu = properties.has_menu
@@ -197,8 +236,9 @@
     const sourceDates = created || updated
       ? `<strong>Source dates</strong>${created ? `<span>Created: ${created}</span>` : ''}${updated ? `<span>Updated: ${updated}</span>` : ''}`
       : '';
-    return `<article class="slm-profile-card">
+    return `<article class="slm-profile-card" style="--slm-type-color:${color}">
       <header class="slm-profile-card__header">
+        <span class="slm-profile-card__type-icon">${popupTypeIcon}</span>
         <div class="slm-profile-card__heading">
           <h3 title="${escapeHtml(properties.name)}">${escapeHtml(properties.name)}</h3>
           ${ratingLine}
@@ -257,18 +297,28 @@
     const emptyElement = app.querySelector('.slm-empty');
     const errorElement = app.querySelector('.slm-error');
     const searchInput = app.querySelector('.slm-search__input');
+    const originInput = app.querySelector('.slm-origin-search__input');
+    const originButton = app.querySelector('.slm-origin-search__button');
     const radiusInput = app.querySelector('.slm-radius');
+    const radiusStepUp = app.querySelector('.slm-radius-step--up');
+    const radiusStepDown = app.querySelector('.slm-radius-step--down');
+    const locateButton = app.querySelector('.slm-locate');
+    const locateButtonLabel = locateButton?.querySelector('span');
+    const queryParameters = new URLSearchParams(window.location.search);
+    const initialRadius = app.classList.contains('slm-app--report')
+      ? queryParameters.get('radius') || data.defaultRadius || ''
+      : data.defaultRadius || '';
     const state = {
-      q: new URLSearchParams(window.location.search).get('q') || '',
-      type: new URLSearchParams(window.location.search).get('type') || '',
-      city: new URLSearchParams(window.location.search).get('city') || '',
-      zip: new URLSearchParams(window.location.search).get('zip') || '',
-      category: new URLSearchParams(window.location.search).get('category') || '',
-      bbox: new URLSearchParams(window.location.search).get('bbox') || '',
-      limit: new URLSearchParams(window.location.search).get('limit') || '',
-      radius: new URLSearchParams(window.location.search).get('radius') || data.defaultRadius || '',
-      lat: new URLSearchParams(window.location.search).get('lat') || '',
-      lng: new URLSearchParams(window.location.search).get('lng') || ''
+      q: queryParameters.get('q') || '',
+      type: queryParameters.get('type') || '',
+      city: queryParameters.get('city') || '',
+      zip: queryParameters.get('zip') || '',
+      category: queryParameters.get('category') || '',
+      bbox: queryParameters.get('bbox') || '',
+      limit: queryParameters.get('limit') || '',
+      radius: normalizeRadius(initialRadius) || '',
+      lat: queryParameters.get('lat') || '',
+      lng: queryParameters.get('lng') || ''
     };
     if (searchInput) searchInput.value = state.q;
     if (radiusInput) radiusInput.value = state.radius;
@@ -283,17 +333,38 @@
     let hasFitBounds = false;
     let currentFeatures = [];
     let currentPage = 1;
+    let originMarker = null;
+    const hasOrigin = () => state.lat !== '' && state.lng !== '';
+    const updateOriginButton = () => {
+      if (originButton) {
+        originButton.textContent = hasOrigin() ? 'Remove address' : 'Set address';
+      }
+    };
 
     const markerIcon = (type) => {
-      const configuredColor = markerColors[type] || '#2563eb';
-      const color = /^#[0-9a-f]{3,8}$/i.test(configuredColor) ? configuredColor : '#2563eb';
+      const color = typeColor(type, markerColors);
       return window.L.divIcon({
       className: 'slm-marker-wrap',
-      html: `<span class="slm-marker" style="--slm-marker-color:${color}"><span class="visually-hidden">${escapeHtml(typeLabel(type))}</span></span>`,
-      iconSize: [28, 36],
-      iconAnchor: [14, 34],
-      popupAnchor: [0, -30]
+      html: `<span class="slm-marker" style="--slm-marker-color:${color}"><span class="slm-marker__icon">${typeIcon(type, 'slm-type-icon')}</span><span class="visually-hidden">${escapeHtml(typeLabel(type))}</span></span>`,
+      iconSize: [32, 40],
+      iconAnchor: [16, 38],
+      popupAnchor: [0, -34]
       });
+    };
+
+    const showOriginMarker = (lat, lng, label = 'Distance starting point') => {
+      if (originMarker) {
+        map.removeLayer(originMarker);
+      }
+      originMarker = window.L.circleMarker([lat, lng], {
+        radius: 8,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#2563eb',
+        fillOpacity: 1,
+        className: 'slm-origin-marker'
+      }).addTo(map);
+      originMarker.bindTooltip(label);
     };
 
     const selectLocation = (id) => {
@@ -332,21 +403,50 @@
       const visible = features.slice(start, start + RESULTS_PER_PAGE);
       visible.forEach((feature) => {
         const properties = feature.properties;
+        const type = properties.type || '';
+        const color = typeColor(type, markerColors);
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'slm-result';
         button.dataset.id = properties.id;
-        const badge = document.createElement('span');
-        badge.className = 'slm-badge';
-        badge.textContent = typeLabel(properties.type || properties.category);
+        button.style.setProperty('--slm-type-color', color);
+        const icon = document.createElement('span');
+        icon.className = 'slm-result__icon';
+        icon.innerHTML = typeIcon(type, 'slm-type-icon');
+        const content = document.createElement('span');
+        content.className = 'slm-result__content';
+        const heading = document.createElement('span');
+        heading.className = 'slm-result__heading';
         const name = document.createElement('strong');
         name.textContent = properties.name;
+        const chevron = document.createElement('span');
+        chevron.className = 'slm-result__chevron';
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.textContent = '›';
+        heading.append(name, chevron);
+        const meta = document.createElement('span');
+        meta.className = 'slm-result__meta';
+        const typeText = document.createElement('span');
+        typeText.className = 'slm-result__type';
+        typeText.textContent = typeLabel(type || properties.category);
         const location = document.createElement('span');
-        location.textContent = [properties.city, properties.state, properties.zip].filter(Boolean).join(', ');
-        const distance = document.createElement('span');
-        distance.className = 'slm-result__distance';
-        distance.textContent = properties.distance_miles !== undefined ? `${properties.distance_miles} miles away` : '';
-        button.append(badge, name, location, distance);
+        location.className = 'slm-result__location';
+        location.textContent = [properties.city, properties.state].filter(Boolean).join(', ');
+        meta.append(typeText);
+        if (location.textContent) {
+          meta.append(location);
+        }
+        content.append(heading, meta);
+        if (properties.distance_miles !== undefined) {
+          const distance = document.createElement('span');
+          distance.className = 'slm-result__distance';
+          distance.innerHTML = typeIcon('location', 'slm-result__distance-icon');
+          const distanceText = document.createElement('span');
+          distanceText.textContent = `${properties.distance_miles} mi away`;
+          distance.append(distanceText);
+          content.append(distance);
+        }
+        button.append(icon, content);
         button.addEventListener('click', () => selectLocation(properties.id));
         resultsElement.append(button);
       });
@@ -392,7 +492,7 @@
       app.querySelectorAll('.slm-footer-dataset-total').forEach((element) => { element.textContent = datasetTotal.toLocaleString(); });
       app.closest('.slm-report')?.querySelectorAll('.slm-report-visible-count').forEach((element) => { element.textContent = count; });
       app.querySelectorAll('.slm-footer-radius').forEach((element) => {
-        element.textContent = `Radius: ${state.radius && state.lat && state.lng ? `${state.radius} miles` : 'Any distance'}`;
+        element.textContent = `Radius: ${state.radius && hasOrigin() ? `${state.radius} miles` : 'Any distance'}`;
       });
     };
 
@@ -407,6 +507,7 @@
       loadingElement.hidden = false;
       emptyElement.hidden = true;
       errorElement.hidden = true;
+      errorElement.textContent = 'Locations could not be loaded. Please try again.';
       const params = new URLSearchParams();
       if (state.q) params.set('q', state.q);
       if (state.type) params.set('type', state.type);
@@ -416,10 +517,12 @@
       if (!state.limit) {
         params.set('limit', FULL_MAP_REQUEST_LIMIT);
       }
-      if (state.radius && state.lat && state.lng) {
-        params.set('radius', state.radius);
+      if (hasOrigin()) {
         params.set('lat', state.lat);
         params.set('lng', state.lng);
+        if (state.radius) {
+          params.set('radius', state.radius);
+        }
       }
       try {
         const response = await fetch(`${data.apiUrl}?${params}`, {headers: {'Accept': 'application/geo+json'}});
@@ -431,7 +534,7 @@
         geojson.features.forEach((feature) => {
           const [lng, lat] = feature.geometry.coordinates;
           const marker = window.L.marker([lat, lng], {icon: markerIcon(feature.properties.type)});
-          marker.bindPopup(detailsHtml(feature.properties), {
+          marker.bindPopup(detailsHtml(feature.properties, markerColors), {
             className: 'slm-profile-popup',
             closeButton: false,
             maxWidth: 370,
@@ -442,6 +545,9 @@
           markers.set(String(feature.properties.id), marker);
           bounds.push([lat, lng]);
         });
+        if (hasOrigin()) {
+          bounds.push([Number(state.lat), Number(state.lng)]);
+        }
         renderResults(geojson.features, 1);
         updateStatus(geojson.features.length, geojson.meta?.dataset_total || geojson.features.length);
         if (geojson.meta?.last_updated) {
@@ -451,8 +557,7 @@
         }
         const report = app.closest('.slm-report');
         report?.querySelectorAll('[data-legend-type]').forEach((dot) => {
-          const configuredColor = markerColors[dot.dataset.legendType] || '#2563eb';
-          dot.style.backgroundColor = /^#[0-9a-f]{3,8}$/i.test(configuredColor) ? configuredColor : '#2563eb';
+          dot.style.backgroundColor = typeColor(dot.dataset.legendType, markerColors);
         });
         emptyElement.hidden = geojson.features.length !== 0;
         if (bounds.length && (!hasFitBounds || state.q || state.type || state.radius)) {
@@ -486,6 +591,14 @@
       delayedLoad();
     });
     app.querySelectorAll('.slm-filter').forEach((button) => {
+      const filterType = button.dataset.type || 'all';
+      button.style.setProperty('--slm-filter-color', button.dataset.type ? typeColor(button.dataset.type, markerColors) : '#2563eb');
+      if (!button.querySelector('.slm-filter__icon')) {
+        const icon = document.createElement('span');
+        icon.className = 'slm-filter__icon';
+        icon.innerHTML = typeIcon(filterType, 'slm-type-icon');
+        button.prepend(icon);
+      }
       button.classList.toggle('is-active', button.dataset.type === state.type);
       button.setAttribute('aria-pressed', button.dataset.type === state.type ? 'true' : 'false');
       button.addEventListener('click', () => {
@@ -498,30 +611,140 @@
         load();
       });
     });
-    radiusInput?.addEventListener('change', () => {
-      state.radius = radiusInput.value;
-      load();
+    const updateRadius = (useDelay = false) => {
+      const radius = normalizeRadius(radiusInput?.value);
+      if (radius === null) {
+        radiusInput?.setCustomValidity('Enter a distance from 0.1 to 25,000 miles.');
+        return;
+      }
+      radiusInput?.setCustomValidity('');
+      state.radius = radius;
+      if (useDelay) delayedLoad();
+      else load();
+    };
+    radiusInput?.addEventListener('input', () => {
+      const match = radiusInput.value.match(/^\d{0,5}(?:\.\d{0,2})?/);
+      radiusInput.value = match ? match[0] : '';
+      updateRadius(true);
     });
-    app.querySelector('.slm-locate')?.addEventListener('click', () => {
+    radiusInput?.addEventListener('change', () => updateRadius());
+    radiusInput?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        updateRadius();
+        radiusInput.blur();
+      }
+    });
+    const stepRadius = (direction) => {
+      const current = normalizeRadius(radiusInput?.value);
+      if (direction < 0 && (current === '' || current === null || Number(current) <= 1)) {
+        radiusInput.value = '';
+        updateRadius();
+        return;
+      }
+      const next = Math.min(25000, (current === '' || current === null ? 0 : Number(current)) + direction);
+      radiusInput.value = Number(next.toFixed(2)).toString();
+      updateRadius();
+    };
+    radiusStepUp?.addEventListener('click', () => stepRadius(1));
+    radiusStepDown?.addEventListener('click', () => stepRadius(-1));
+    const clearAddressOrigin = async () => {
+      state.lat = '';
+      state.lng = '';
+      if (originInput) originInput.value = '';
+      if (originMarker) {
+        map.removeLayer(originMarker);
+        originMarker = null;
+      }
+      updateOriginButton();
+      await load();
+    };
+    const setAddressOrigin = async () => {
+      const address = originInput?.value.trim() || '';
+      if (!address) {
+        await clearAddressOrigin();
+        return;
+      }
+      originButton.disabled = true;
+      originButton.textContent = 'Finding...';
+      errorElement.hidden = true;
+      try {
+        const response = await fetch(`${data.geocodeUrl}?${new URLSearchParams({address})}`, {headers: {'Accept': 'application/json'}});
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || `HTTP ${response.status}`);
+        }
+        state.lat = Number(result.lat).toFixed(6);
+        state.lng = Number(result.lng).toFixed(6);
+        if (originInput) originInput.value = result.display_name || address;
+        showOriginMarker(state.lat, state.lng, result.display_name || address);
+        map.setView([state.lat, state.lng], Math.max(map.getZoom(), 10));
+        await load();
+      }
+      catch (error) {
+        errorElement.textContent = error.message || 'The address could not be found.';
+        errorElement.hidden = false;
+      }
+      finally {
+        originButton.disabled = false;
+        updateOriginButton();
+      }
+    };
+    originButton?.addEventListener('click', () => {
+      if (hasOrigin()) {
+        clearAddressOrigin();
+      }
+      else {
+        setAddressOrigin();
+      }
+    });
+    originInput?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        setAddressOrigin();
+      }
+    });
+    locateButton?.addEventListener('click', () => {
       if (!navigator.geolocation) {
         errorElement.textContent = 'Geolocation is not supported by this browser.';
         errorElement.hidden = false;
         return;
       }
-      navigator.geolocation.getCurrentPosition((position) => {
+      locateButton.disabled = true;
+      if (locateButtonLabel) locateButtonLabel.textContent = 'Finding...';
+      navigator.geolocation.getCurrentPosition(async (position) => {
         state.lat = position.coords.latitude.toFixed(6);
         state.lng = position.coords.longitude.toFixed(6);
-        if (!state.radius) {
-          state.radius = radiusInput?.options[1]?.value || '25';
-          if (radiusInput) radiusInput.value = state.radius;
+        let address = `${state.lat}, ${state.lng}`;
+        showOriginMarker(state.lat, state.lng, 'Finding address...');
+        try {
+          const response = await fetch(`${data.geocodeUrl}?${new URLSearchParams({lat: state.lat, lng: state.lng})}`, {headers: {'Accept': 'application/json'}});
+          const result = await response.json();
+          if (response.ok && result.display_name) {
+            address = result.display_name;
+          }
         }
+        catch (error) {
+          // Coordinates remain usable when reverse geocoding is unavailable.
+        }
+        if (originInput) originInput.value = address;
+        showOriginMarker(state.lat, state.lng, address);
+        updateOriginButton();
         map.setView([state.lat, state.lng], 11);
-        load();
+        await load();
+        locateButton.disabled = false;
+        if (locateButtonLabel) locateButtonLabel.textContent = 'Use my location';
       }, () => {
         errorElement.textContent = 'Your location could not be used. Check browser location permission and try again.';
         errorElement.hidden = false;
+        locateButton.disabled = false;
+        if (locateButtonLabel) locateButtonLabel.textContent = 'Use my location';
       }, {enableHighAccuracy: false, timeout: 10000});
     });
+    if (hasOrigin()) {
+      showOriginMarker(state.lat, state.lng);
+    }
+    updateOriginButton();
     const reportContainer = app.closest('.slm-report');
     reportContainer?.querySelector('.slm-print')?.addEventListener('click', () => window.print());
     reportContainer?.querySelector('.slm-copy-url')?.addEventListener('click', async (event) => {

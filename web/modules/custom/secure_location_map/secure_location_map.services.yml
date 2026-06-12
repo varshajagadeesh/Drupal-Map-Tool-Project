@@ -10,10 +10,13 @@ services:
     class: Drupal\secure_location_map\Service\LocationRepository
     arguments: ['@database', '@secure_location_map.distance']
 
+  secure_location_map.geocoding:
+    class: Drupal\secure_location_map\Service\GeocodingService
+    arguments: ['@http_client', '@cache.default']
+
   secure_location_map.csv_validation:
     class: Drupal\secure_location_map\Service\CsvValidationService
 
   secure_location_map.csv_import:
     class: Drupal\secure_location_map\Service\CsvImportService
     arguments: ['@database', '@secure_location_map.csv_validation', '@secure_location_map.dataset_repository', '@datetime.time']
-

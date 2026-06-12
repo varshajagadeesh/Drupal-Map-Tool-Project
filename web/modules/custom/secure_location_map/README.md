@@ -132,6 +132,8 @@ The GeoJSON endpoint accepts:
 - `type`: one type or comma-separated types
 - `category`
 - `lat`, `lng`, and `radius`: Haversine radius filtering in miles
+
+The public map also has a **Starting address** field. Submitting an address resolves it through OpenStreetMap Nominatim, then keeps the active search/type/radius filters and sorts matching locations from nearest to farthest. Address lookup only runs when the user submits the field.
 - `bbox`: `west,south,east,north`
 - `limit`: bounded by global settings
 
@@ -221,4 +223,3 @@ php core/scripts/run-tests.sh --module secure_location_map --testsuite unit
 ```
 
 The repository containing this module alone does not include Drupal core or its PHPUnit bootstrap.
-

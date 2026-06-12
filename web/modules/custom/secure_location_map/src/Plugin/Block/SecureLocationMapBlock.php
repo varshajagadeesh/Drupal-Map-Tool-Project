@@ -134,6 +134,7 @@ class SecureLocationMapBlock extends BlockBase implements ContainerFactoryPlugin
       '#theme' => 'secure_location_map',
       '#dataset' => $dataset,
       '#api_url' => Url::fromRoute('secure_location_map.api', ['dataset_machine_name' => $dataset['machine_name']])->toString(),
+      '#geocode_url' => Url::fromRoute('secure_location_map.geocode', ['dataset_machine_name' => $dataset['machine_name']])->toString(),
       '#report_url' => Url::fromRoute('secure_location_map.report', ['dataset_machine_name' => $dataset['machine_name']])->toString(),
       '#options' => $options,
       '#attached' => ['library' => ['secure_location_map/frontend']],

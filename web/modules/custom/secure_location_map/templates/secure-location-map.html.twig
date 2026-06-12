@@ -8,6 +8,7 @@
   class="slm-app{{ options.compact ? ' slm-app--compact' : '' }}{{ options.report ? ' slm-app--report' : '' }}"
   data-dataset="{{ dataset.machine_name }}"
   data-api-url="{{ api_url }}"
+  data-geocode-url="{{ geocode_url }}"
   data-report-url="{{ report_url }}"
   data-default-lat="{{ dataset.default_lat }}"
   data-default-lng="{{ dataset.default_lng }}"
@@ -52,6 +53,35 @@
         <button class="slm-button slm-search__button" type="button">Search</button>
         </div>
       </div>
+      <div class="slm-toolbar__group slm-toolbar__group--origin">
+        <span class="slm-toolbar__label">Starting address</span>
+        <div class="slm-origin-search">
+          <label class="visually-hidden" for="slm-origin-{{ dataset.machine_name }}">Address to sort locations from</label>
+          <input id="slm-origin-{{ dataset.machine_name }}" class="slm-origin-search__input" type="search" placeholder="Enter an address" autocomplete="street-address">
+          <button class="slm-button slm-origin-search__button" type="button">Set address</button>
+          <button class="slm-button slm-locate" type="button">
+            <svg class="slm-locate__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21s6-5.4 6-11a6 6 0 1 0-12 0c0 5.6 6 11 6 11Z"/>
+              <circle cx="12" cy="10" r="2.2"/>
+            </svg>
+            <span>Use my location</span>
+          </button>
+        </div>
+      </div>
+      <div class="slm-toolbar__group">
+        <span class="slm-toolbar__label">Distance</span>
+        <div class="slm-radius-controls">
+          <label class="visually-hidden" for="slm-radius-{{ dataset.machine_name }}">Maximum distance in miles</label>
+          <div class="slm-radius-field">
+            <input id="slm-radius-{{ dataset.machine_name }}" class="slm-radius" type="text" inputmode="decimal" placeholder="Any distance" aria-label="Maximum distance in miles">
+            <span aria-hidden="true">miles</span>
+            <span class="slm-radius-spinner">
+              <button class="slm-radius-step slm-radius-step--up" type="button" aria-label="Increase distance by 1 mile"></button>
+              <button class="slm-radius-step slm-radius-step--down" type="button" aria-label="Decrease distance by 1 mile"></button>
+            </span>
+          </div>
+        </div>
+      </div>
       <div class="slm-toolbar__group">
         <span class="slm-toolbar__label">Location type</span>
         <div class="slm-type-filters" aria-label="Filter by location type">
@@ -59,19 +89,6 @@
           {% for type in dataset.allowed_types %}
             <button class="slm-filter" type="button" data-type="{{ type }}" aria-pressed="false">{{ type|replace({'_': ' '})|title }}</button>
           {% endfor %}
-        </div>
-      </div>
-      <div class="slm-toolbar__group">
-        <span class="slm-toolbar__label">Distance</span>
-        <div class="slm-radius-controls">
-          <label class="visually-hidden" for="slm-radius-{{ dataset.machine_name }}">Radius</label>
-          <select id="slm-radius-{{ dataset.machine_name }}" class="slm-radius" aria-label="Search radius">
-            <option value="">Any distance</option>
-            {% for radius in options.radius_options %}
-              <option value="{{ radius }}"{{ options.default_radius == radius ? ' selected' : '' }}>{{ radius }} miles</option>
-            {% endfor %}
-          </select>
-          <button class="slm-button slm-locate" type="button">Use my location</button>
         </div>
       </div>
     </div>
