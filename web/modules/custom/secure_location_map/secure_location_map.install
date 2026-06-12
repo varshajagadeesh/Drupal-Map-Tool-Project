@@ -155,3 +155,13 @@ function secure_location_map_install(): void {
     }
   }
 }
+
+/**
+ * Raises the API limit to support the full Bankcura dataset.
+ */
+function secure_location_map_update_11001(): void {
+  $config = \Drupal::configFactory()->getEditable('secure_location_map.settings');
+  if ((int) $config->get('max_api_result_limit') < 100000) {
+    $config->set('max_api_result_limit', 100000)->save();
+  }
+}

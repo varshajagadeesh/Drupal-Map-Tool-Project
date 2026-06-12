@@ -32,7 +32,7 @@ class SettingsForm extends ConfigFormBase {
       '#type' => 'number',
       '#title' => $this->t('Maximum API result limit'),
       '#min' => 1,
-      '#max' => 50000,
+      '#max' => 250000,
       '#required' => TRUE,
       '#default_value' => $config->get('max_api_result_limit'),
     ];

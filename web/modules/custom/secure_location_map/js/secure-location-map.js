@@ -2,7 +2,7 @@
   'use strict';
 
   const RESULTS_PER_PAGE = 50;
-  const FULL_MAP_REQUEST_LIMIT = 50000;
+  const FULL_MAP_REQUEST_LIMIT = 100000;
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;',
