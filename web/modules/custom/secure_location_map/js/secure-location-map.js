@@ -57,8 +57,20 @@
     return `<svg class="${className}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[key]}</svg>`;
   };
 
+  const verifiedIcon = (className = 'slm-verified-icon') => `<svg class="${className}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z"/><path d="m8.7 12 2.1 2.1 4.6-4.7"/></svg>`;
+
+  const isUnitedStates = (value) => /^(?:u\.?s\.?a?\.?|united states(?: of america)?)$/i.test(String(value || '').trim());
+
+  const removeUnitedStates = (value) => String(value || '')
+    .split(/\s*,\s*/)
+    .filter((part) => part && !isUnitedStates(part))
+    .join(', ')
+    .replace(/\s+(?:united states(?: of america)?|u\.?s\.?a?\.?)$/i, '')
+    .trim()
+    .replace(/,\s*$/, '');
+
   const formatAddress = (properties) => {
-    const address = String(properties.address || '').trim();
+    const address = removeUnitedStates(properties.address);
     const addressLower = address.toLocaleLowerCase();
     const city = String(properties.city || '').trim();
     const state = String(properties.state || '').trim();
@@ -77,6 +89,17 @@
       }
     });
     return parts.join(', ');
+  };
+
+  const formatCardAddress = (properties) => {
+    const address = removeUnitedStates(properties.address);
+    const city = String(properties.city || '').trim();
+    if (!address) return city;
+    if (!city) return address;
+    const cityEnd = address.toLocaleLowerCase().indexOf(city.toLocaleLowerCase());
+    return cityEnd >= 0
+      ? address.slice(0, cityEnd + city.length)
+      : `${address}, ${city}`;
   };
 
   const formatHours = (value) => {
@@ -140,8 +163,10 @@
     return `<svg class="slm-detail-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[name] || paths.category}</svg>`;
   };
 
-  const detailRow = (icon, content, className = '') => content
-    ? `<div class="slm-profile-card__row ${className}">${detailIcon(icon)}<div class="slm-profile-card__row-content">${content}</div></div>`
+  const copyIcon = () => '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="10" height="14" rx="1.5"/><path d="M15 20H6a2 2 0 0 1-2-2V9"/></svg>';
+
+  const detailRow = (icon, content, className = '', copyValue = '') => content
+    ? `<div class="slm-profile-card__row ${className}${copyValue ? ' slm-profile-card__row--copyable' : ''}">${detailIcon(icon)}<div class="slm-profile-card__row-content">${content}</div>${copyValue ? `<button class="slm-profile-card__copy" type="button" data-copy-value="${escapeHtml(copyValue)}" aria-label="Copy ${escapeHtml(icon)}" title="Copy ${escapeHtml(icon)}">${copyIcon()}</button>` : ''}</div>`
     : '';
 
   const linkList = (links) => Array.isArray(links)
@@ -181,10 +206,12 @@
   };
 
   const detailsHtml = (properties, markerColors = {}) => {
-    const address = escapeHtml(formatAddress(properties));
+    const addressText = formatAddress(properties);
+    const address = escapeHtml(addressText);
     const hours = escapeHtml(formatHours(properties.hours));
     const priceRange = escapeHtml(String(properties.price_range || '').trim());
-    const country = escapeHtml(String(properties.country || '').trim());
+    const countryText = String(properties.country || '').trim();
+    const country = isUnitedStates(countryText) ? '' : escapeHtml(countryText);
     const description = escapeHtml(String(properties.description || '').trim());
     const attributes = Array.isArray(properties.attributes)
       ? properties.attributes.map(escapeHtml).join(' · ')
@@ -206,8 +233,10 @@
       ? `<a href="${escapeHtml(websiteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(websiteLabel(websiteUrl))}</a>`
       : '';
     const phoneText = String(properties.phone || '').trim();
+    const formattedPhone = formatPhone(phoneText);
+    const phoneDigits = phoneText.replace(/\D/g, '');
     const phone = phoneText
-      ? `<a href="tel:${escapeHtml(phoneText.replace(/[^\d+(). -]/g, ''))}">${escapeHtml(formatPhone(phoneText))}</a>`
+      ? `<a href="tel:${escapeHtml(phoneText.replace(/[^\d+(). -]/g, ''))}">${escapeHtml(formattedPhone)}</a>`
       : '';
     const ratingValue = Math.min(5, Math.max(0, Number(properties.rating) || 0));
     const reviewCount = Math.max(0, Number(properties.review_count) || 0);
@@ -221,17 +250,25 @@
     const category = Array.isArray(properties.categories) && properties.categories.length
       ? properties.categories.map(escapeHtml).join(', ')
       : escapeHtml(String(properties.category || typeLabel(properties.type)).trim());
+    const verifiedBadge = properties.is_verified === true
+      ? `<span class="slm-verified-badge" aria-label="Verified location">${verifiedIcon()}<span>Verified</span></span>`
+      : '';
     const color = typeColor(properties.type, markerColors);
     const popupTypeIcon = typeIcon(properties.type, 'slm-type-icon');
     const distance = properties.distance_miles !== undefined
       ? `<span class="slm-profile-card__secondary">${escapeHtml(properties.distance_miles)} miles from starting point</span>`
       : '';
-    const addressDetails = `${address}${country && !address.toLocaleLowerCase().includes(country.toLocaleLowerCase()) ? `<span class="slm-profile-card__secondary">${country}</span>` : ''}${distance}`;
+    const showCountry = country && !address.toLocaleLowerCase().includes(country.toLocaleLowerCase());
+    const addressDetails = `${address}${showCountry ? `<span class="slm-profile-card__secondary">${country}</span>` : ''}${distance}`;
+    const addressCopy = [addressText, showCountry ? countryText : ''].filter(Boolean).join(', ');
     const menu = properties.has_menu
       ? '<span>Menu information available</span>'
       : '';
-    const coordinates = Number.isFinite(Number(properties.latitude)) && Number.isFinite(Number(properties.longitude))
-      ? `<strong>Coordinates</strong><span>${escapeHtml(Number(properties.latitude).toFixed(6))}, ${escapeHtml(Number(properties.longitude).toFixed(6))}</span>`
+    const coordinatesText = Number.isFinite(Number(properties.latitude)) && Number.isFinite(Number(properties.longitude))
+      ? `${Number(properties.latitude).toFixed(6)}, ${Number(properties.longitude).toFixed(6)}`
+      : '';
+    const coordinates = coordinatesText
+      ? `<strong>Coordinates</strong><span>${escapeHtml(coordinatesText)}</span>`
       : '';
     const sourceDates = created || updated
       ? `<strong>Source dates</strong>${created ? `<span>Created: ${created}</span>` : ''}${updated ? `<span>Updated: ${updated}</span>` : ''}`
@@ -243,24 +280,25 @@
           <h3 title="${escapeHtml(properties.name)}">${escapeHtml(properties.name)}</h3>
           ${ratingLine}
           <span class="slm-profile-card__type">${category}</span>
+          ${verifiedBadge}
         </div>
         <button class="slm-profile-card__close" type="button" aria-label="Close location details">&times;</button>
       </header>
       <div class="slm-profile-card__body">
         ${detailRow('description', description)}
-        ${detailRow('address', addressDetails)}
+        ${detailRow('address', addressDetails, '', addressCopy)}
         ${detailRow('hours', hours ? `<strong>Hours</strong><span>${hours}</span>` : '')}
         ${detailRow('price', priceRange ? `<strong>${priceRange}</strong><span>Price range</span>` : '')}
         ${detailRow('features', attributes ? `<strong>Features</strong><span>${attributes}</span>` : '')}
         ${detailRow('order', reservationLinks ? `<strong>Reservations</strong><span>${reservationLinks}</span>` : '')}
         ${detailRow('order', orderOnlineLinks ? `<strong>Order online</strong><span>${orderOnlineLinks}</span>` : '')}
         ${detailRow('category', menu)}
-        ${detailRow('website', website)}
-        ${detailRow('phone', phone)}
+        ${detailRow('website', website, '', websiteUrl)}
+        ${detailRow('phone', phone, '', phoneDigits)}
         ${detailRow('email', email)}
         ${detailRow('social', socials ? `<strong>Social links</strong><span>${socials}</span>` : '')}
         ${detailRow('plus', plusCode ? `<strong>Plus code</strong><span>${plusCode}</span>` : '')}
-        ${detailRow('coordinates', coordinates)}
+        ${detailRow('coordinates', coordinates, '', coordinatesText)}
         ${detailRow('timezone', timezone ? `<strong>Timezone</strong><span>${timezone}</span>` : '')}
         ${detailRow('rating', breakdown ? `<strong>Rating breakdown</strong><span>${breakdown}</span>` : '')}
         ${detailRow('updated', sourceDates)}
@@ -274,6 +312,25 @@
       window.clearTimeout(timer);
       timer = window.setTimeout(() => callback(...args), delay);
     };
+  };
+
+  const copyText = async (value) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    textarea.remove();
+    if (!copied) {
+      throw new Error('Copy failed');
+    }
   };
 
   const initialize = (app) => {
@@ -304,6 +361,71 @@
     const radiusStepDown = app.querySelector('.slm-radius-step--down');
     const locateButton = app.querySelector('.slm-locate');
     const locateButtonLabel = locateButton?.querySelector('span');
+    const clipboardToast = document.createElement('div');
+    clipboardToast.className = 'slm-clipboard-toast';
+    clipboardToast.setAttribute('role', 'status');
+    clipboardToast.setAttribute('aria-live', 'polite');
+    clipboardToast.hidden = true;
+    clipboardToast.innerHTML = '<span>Copied to clipboard</span><button type="button" aria-label="Close copied message">&times;</button>';
+    app.append(clipboardToast);
+    let clipboardToastTimer;
+    let clipboardToastTransitionTimer;
+    let clipboardToastRestartAnimation;
+    const updateClipboardToastPosition = () => {
+      const footer = app.querySelector('.slm-footer');
+      const footerRect = footer?.getBoundingClientRect();
+      const footerHeight = footerRect?.height > 0 ? footerRect.height : 0;
+      clipboardToast.style.setProperty('--slm-toast-bottom', `${Math.round(footerHeight)}px`);
+    };
+    const hideClipboardToast = (immediate = false) => {
+      window.clearTimeout(clipboardToastTimer);
+      window.clearTimeout(clipboardToastTransitionTimer);
+      clipboardToastRestartAnimation?.cancel();
+      clipboardToastRestartAnimation = null;
+      if (!immediate) {
+        void clipboardToast.offsetWidth;
+      }
+      clipboardToast.classList.remove('is-visible');
+      if (immediate) {
+        clipboardToast.hidden = true;
+        return;
+      }
+      clipboardToastTransitionTimer = window.setTimeout(() => {
+        clipboardToast.hidden = true;
+      }, 240);
+    };
+    const showClipboardToast = () => {
+      window.clearTimeout(clipboardToastTimer);
+      window.clearTimeout(clipboardToastTransitionTimer);
+      updateClipboardToastPosition();
+      const restart = !clipboardToast.hidden;
+      if (restart) {
+        clipboardToastRestartAnimation?.cancel();
+        clipboardToast.classList.add('is-visible');
+        clipboardToastRestartAnimation = clipboardToast.animate([
+          {transform: 'translate(-50%, 0)'},
+          {transform: 'translate(-50%, 100%)', offset: .5},
+          {transform: 'translate(-50%, 0)'}
+        ], {
+          duration: 460,
+          easing: 'ease-in-out'
+        });
+        clipboardToastRestartAnimation.addEventListener('finish', () => {
+          clipboardToastRestartAnimation = null;
+        }, {once: true});
+      }
+      else {
+        clipboardToast.hidden = false;
+        clipboardToast.classList.remove('is-visible');
+        void clipboardToast.offsetWidth;
+        window.requestAnimationFrame(() => {
+          clipboardToast.classList.add('is-visible');
+        });
+      }
+      clipboardToastTimer = window.setTimeout(() => hideClipboardToast(), 3500);
+    };
+    clipboardToast.querySelector('button')?.addEventListener('click', () => hideClipboardToast());
+    window.addEventListener('resize', updateClipboardToastPosition);
     const queryParameters = new URLSearchParams(window.location.search);
     const initialRadius = app.classList.contains('slm-app--report')
       ? queryParameters.get('radius') || data.defaultRadius || ''
@@ -314,6 +436,7 @@
       city: queryParameters.get('city') || '',
       zip: queryParameters.get('zip') || '',
       category: queryParameters.get('category') || '',
+      verified: ['1', 'true'].includes((queryParameters.get('verified') || '').toLocaleLowerCase()) ? '1' : '',
       bbox: queryParameters.get('bbox') || '',
       limit: queryParameters.get('limit') || '',
       radius: normalizeRadius(initialRadius) || '',
@@ -384,7 +507,34 @@
       app.querySelectorAll('.slm-result').forEach((result) => result.classList.toggle('is-selected', result.dataset.id === String(id)));
     };
 
-    app.addEventListener('click', (event) => {
+    app.addEventListener('click', async (event) => {
+      const copyButton = event.target.closest('.slm-profile-card__copy');
+      if (copyButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        window.clearTimeout(clipboardToastTimer);
+        const originalLabel = copyButton.getAttribute('aria-label') || 'Copy';
+        try {
+          await copyText(copyButton.dataset.copyValue || '');
+          copyButton.setAttribute('aria-label', 'Copied');
+          showClipboardToast();
+        }
+        catch (error) {
+          copyButton.setAttribute('aria-label', 'Copy failed');
+          copyButton.setAttribute('title', 'Copy failed');
+          if (!clipboardToast.hidden) {
+            clipboardToastTimer = window.setTimeout(() => hideClipboardToast(), 3500);
+          }
+        }
+        if (event.detail > 0) {
+          copyButton.blur();
+        }
+        window.setTimeout(() => {
+          copyButton.setAttribute('aria-label', originalLabel);
+          copyButton.setAttribute('title', originalLabel);
+        }, 1400);
+        return;
+      }
       if (event.target.closest('.slm-profile-card__close')) {
         map.closePopup();
       }
@@ -429,14 +579,21 @@
         const typeText = document.createElement('span');
         typeText.className = 'slm-result__type';
         typeText.textContent = typeLabel(type || properties.category);
-        const location = document.createElement('span');
-        location.className = 'slm-result__location';
-        location.textContent = [properties.city, properties.state].filter(Boolean).join(', ');
+        const verified = document.createElement('span');
+        verified.className = 'slm-result__verified';
+        verified.setAttribute('aria-label', 'Verified location');
+        verified.innerHTML = `${verifiedIcon()}<span>Verified</span>`;
+        const address = document.createElement('span');
+        address.className = 'slm-result__address';
+        address.textContent = formatCardAddress(properties);
         meta.append(typeText);
-        if (location.textContent) {
-          meta.append(location);
+        if (properties.is_verified === true) {
+          meta.append(verified);
         }
         content.append(heading, meta);
+        if (address.textContent) {
+          content.append(address);
+        }
         if (properties.distance_miles !== undefined) {
           const distance = document.createElement('span');
           distance.className = 'slm-result__distance';
@@ -511,7 +668,7 @@
       const params = new URLSearchParams();
       if (state.q) params.set('q', state.q);
       if (state.type) params.set('type', state.type);
-      ['city', 'zip', 'category', 'bbox', 'limit'].forEach((key) => {
+      ['city', 'zip', 'category', 'verified', 'bbox', 'limit'].forEach((key) => {
         if (state[key]) params.set(key, state[key]);
       });
       if (!state.limit) {
@@ -560,7 +717,7 @@
           dot.style.backgroundColor = typeColor(dot.dataset.legendType, markerColors);
         });
         emptyElement.hidden = geojson.features.length !== 0;
-        if (bounds.length && (!hasFitBounds || state.q || state.type || state.radius)) {
+        if (bounds.length && (!hasFitBounds || state.q || state.type || state.verified || state.radius)) {
           map.fitBounds(bounds, {padding: [35, 35], maxZoom: 13});
           hasFitBounds = true;
         }
@@ -590,7 +747,7 @@
       state.q = searchInput.value.trim();
       delayedLoad();
     });
-    app.querySelectorAll('.slm-filter').forEach((button) => {
+    app.querySelectorAll('.slm-filter[data-type]').forEach((button) => {
       const filterType = button.dataset.type || 'all';
       button.style.setProperty('--slm-filter-color', button.dataset.type ? typeColor(button.dataset.type, markerColors) : '#2563eb');
       if (!button.querySelector('.slm-filter__icon')) {
@@ -603,7 +760,7 @@
       button.setAttribute('aria-pressed', button.dataset.type === state.type ? 'true' : 'false');
       button.addEventListener('click', () => {
         state.type = button.dataset.type;
-        app.querySelectorAll('.slm-filter').forEach((candidate) => {
+        app.querySelectorAll('.slm-filter[data-type]').forEach((candidate) => {
           const active = candidate === button;
           candidate.classList.toggle('is-active', active);
           candidate.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -611,6 +768,21 @@
         load();
       });
     });
+    const verifiedFilter = app.querySelector('.slm-verified-filter');
+    if (verifiedFilter) {
+      verifiedFilter.style.setProperty('--slm-filter-color', '#15803d');
+      const updateVerifiedFilter = () => {
+        const active = state.verified === '1' || state.verified === 'true';
+        verifiedFilter.classList.toggle('is-active', active);
+        verifiedFilter.setAttribute('aria-pressed', active ? 'true' : 'false');
+      };
+      updateVerifiedFilter();
+      verifiedFilter.addEventListener('click', () => {
+        state.verified = state.verified ? '' : '1';
+        updateVerifiedFilter();
+        load();
+      });
+    }
     const updateRadius = (useDelay = false) => {
       const radius = normalizeRadius(radiusInput?.value);
       if (radius === null) {

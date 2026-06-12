@@ -42,7 +42,7 @@ class MapApiController extends ControllerBase {
     $requested_limit = $request->query->get('limit', $default);
     $limit = min($max, max(1, is_scalar($requested_limit) ? (int) $requested_limit : $default));
     $filters = [];
-    foreach (['q', 'city', 'zip', 'type', 'category', 'lat', 'lng', 'radius', 'bbox'] as $key) {
+    foreach (['q', 'city', 'zip', 'type', 'category', 'verified', 'lat', 'lng', 'radius', 'bbox'] as $key) {
       $value = $request->query->get($key);
       $filters[$key] = is_scalar($value) ? mb_substr((string) $value, 0, 500) : '';
     }

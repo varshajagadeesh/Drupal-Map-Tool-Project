@@ -84,11 +84,20 @@
       </div>
       <div class="slm-toolbar__group">
         <span class="slm-toolbar__label">Location type</span>
-        <div class="slm-type-filters" aria-label="Filter by location type">
-          <button class="slm-filter is-active" type="button" data-type="" aria-pressed="true">All</button>
-          {% for type in dataset.allowed_types %}
-            <button class="slm-filter" type="button" data-type="{{ type }}" aria-pressed="false">{{ type|replace({'_': ' '})|title }}</button>
-          {% endfor %}
+        <div class="slm-filter-row">
+          <div class="slm-type-filters" aria-label="Filter by location type">
+            <button class="slm-filter is-active" type="button" data-type="" aria-pressed="true">All</button>
+            {% for type in dataset.allowed_types %}
+              <button class="slm-filter" type="button" data-type="{{ type }}" aria-pressed="false">{{ type|replace({'_': ' '})|title }}</button>
+            {% endfor %}
+          </div>
+          <button class="slm-filter slm-verified-filter" type="button" data-verified="1" aria-pressed="false">
+            <svg class="slm-filter__shield" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z"/>
+              <path d="m8.7 12 2.1 2.1 4.6-4.7"/>
+            </svg>
+            Verified
+          </button>
         </div>
       </div>
     </div>

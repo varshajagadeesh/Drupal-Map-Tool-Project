@@ -96,6 +96,13 @@ class LocationRepository {
     if (!empty($filters['category'])) {
       $query->condition('category', '%' . $this->database->escapeLike(trim((string) $filters['category'])) . '%', 'LIKE');
     }
+    $verified = strtolower(trim((string) ($filters['verified'] ?? '')));
+    if (in_array($verified, ['1', 'true'], TRUE)) {
+      $query->condition('is_verified', 1);
+    }
+    elseif (in_array($verified, ['0', 'false'], TRUE)) {
+      $query->condition('is_verified', 0);
+    }
 
     $bbox = $this->parseBbox($filters['bbox'] ?? NULL);
     $has_origin = is_numeric($filters['lat'] ?? NULL)
